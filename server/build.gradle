@@ -3,6 +3,8 @@ plugins {
     id 'org.jetbrains.kotlin.jvm'
 }
 
+apply plugin: 'application'
+
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
@@ -27,3 +29,6 @@ compileKotlin {
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
+
+//sourceSets.main.java.srcDirs = ['src']
+mainClassName = "com.jwheeler.server.ExampleServer"

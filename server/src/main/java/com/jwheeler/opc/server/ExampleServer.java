@@ -1,4 +1,4 @@
-package com.jwheeler.server;
+package com.jwheeler.opc.server;
 
 import com.google.common.collect.ImmutableList;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;

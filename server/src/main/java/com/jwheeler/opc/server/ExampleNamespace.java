@@ -11,11 +11,11 @@
  *   http://www.eclipse.org/org/documents/edl-v10.html.
  */
 
-package com.jwheeler.server;
+package com.jwheeler.opc.server;
 
 import com.google.common.collect.Lists;
-import com.jwheeler.server.methods.SqrtMethod;
-import com.jwheeler.server.types.CustomDataType;
+import com.jwheeler.opc.server.methods.SqrtMethod;
+import com.jwheeler.opc.server.types.CustomDataType;
 import org.eclipse.milo.opcua.sdk.core.AccessLevel;
 import org.eclipse.milo.opcua.sdk.core.Reference;
 import org.eclipse.milo.opcua.sdk.core.ValueRank;

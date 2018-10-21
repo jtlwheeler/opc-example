@@ -11,7 +11,7 @@
  *   http://www.eclipse.org/org/documents/edl-v10.html.
  */
 
-package com.jwheeler.server;
+package com.jwheeler.opc.server;
 
 import java.util.Optional;
 import java.util.Set;
