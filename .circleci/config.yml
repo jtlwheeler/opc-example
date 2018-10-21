@@ -40,3 +40,7 @@ jobs:
 
     # run tests!
     - run: ./gradlew distZip
+
+    - store_artifacts:
+        path: server/build/distributions/server-1.0-SNAPSHOT.zip
+        destination: server-1.0-SNAPSHOT.zip
