@@ -1,0 +1,4 @@
+rootProject.name = 'opc-example'
+include 'server'
+include 'client'
+
