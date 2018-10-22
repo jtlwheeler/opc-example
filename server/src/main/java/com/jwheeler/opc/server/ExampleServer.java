@@ -16,6 +16,7 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.structured.BuildInfo;
 import org.eclipse.milo.opcua.stack.core.util.CertificateUtil;
 import org.eclipse.milo.opcua.stack.core.util.CryptoRestrictions;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -29,6 +30,9 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.eclipse.milo.opcua.sdk.server.api.config.OpcUaServerConfig.*;
 
 public class ExampleServer {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
 
     static {
         CryptoRestrictions.remove();
@@ -61,25 +65,25 @@ public class ExampleServer {
         KeyStoreLoader loader = new KeyStoreLoader().load(securityTempDir);
 
         DefaultCertificateManager certificateManager = new DefaultCertificateManager(
-            loader.getServerKeyPair(),
-            loader.getServerCertificateChain()
+                loader.getServerKeyPair(),
+                loader.getServerCertificateChain()
         );
 
         File pkiDir = securityTempDir.toPath().resolve("pki").toFile();
         DirectoryCertificateValidator certificateValidator = new DirectoryCertificateValidator(pkiDir);
-        LoggerFactory.getLogger(getClass()).info("pki dir: {}", pkiDir.getAbsolutePath());
+        logger.info("pki dir: {}", pkiDir.getAbsolutePath());
 
         UsernameIdentityValidator identityValidator = new UsernameIdentityValidator(
-            true,
-            authChallenge -> {
-                String username = authChallenge.getUsername();
-                String password = authChallenge.getPassword();
+                true,
+                authChallenge -> {
+                    String username = authChallenge.getUsername();
+                    String password = authChallenge.getPassword();
 
-                boolean userOk = "user".equals(username) && "password1".equals(password);
-                boolean adminOk = "admin".equals(username) && "password2".equals(password);
+                    boolean userOk = "user".equals(username) && "password1".equals(password);
+                    boolean adminOk = "admin".equals(username) && "password2".equals(password);
 
-                return userOk || adminOk;
-            }
+                    return userOk || adminOk;
+                }
         );
 
         X509IdentityValidator x509IdentityValidator = new X509IdentityValidator(c -> true);
@@ -93,51 +97,53 @@ public class ExampleServer {
 
         // The configured application URI must match the one in the certificate(s)
         String applicationUri = certificateManager.getCertificates().stream()
-            .findFirst()
-            .map(certificate ->
-                CertificateUtil.getSubjectAltNameField(certificate, CertificateUtil.SUBJECT_ALT_NAME_URI)
-                    .map(Object::toString)
-                    .orElseThrow(() -> new RuntimeException("certificate is missing the application URI")))
-            .orElse("urn:eclipse:milo:examples:server:" + UUID.randomUUID());
+                .findFirst()
+                .map(certificate ->
+                        CertificateUtil.getSubjectAltNameField(certificate, CertificateUtil.SUBJECT_ALT_NAME_URI)
+                                .map(Object::toString)
+                                .orElseThrow(() -> new RuntimeException("certificate is missing the application URI")))
+                .orElse("urn:eclipse:milo:examples:server:" + UUID.randomUUID());
 
         OpcUaServerConfig serverConfig = OpcUaServerConfig.builder()
-            .setApplicationUri(applicationUri)
-            .setApplicationName(LocalizedText.english("Eclipse Milo OPC UA Example Server"))
-            .setBindPort(12686)
-            .setBindAddresses(bindAddresses)
-            .setEndpointAddresses(endpointAddresses)
-            .setBuildInfo(
-                new BuildInfo(
-                    "urn:eclipse:milo:example-server",
-                    "eclipse",
-                    "eclipse milo example server",
-                    OpcUaServer.SDK_VERSION,
-                    "", DateTime.now()))
-            .setCertificateManager(certificateManager)
-            .setCertificateValidator(certificateValidator)
-            .setIdentityValidator(new CompositeValidator(identityValidator, x509IdentityValidator))
-            .setProductUri("urn:eclipse:milo:example-server")
-            .setServerName("example")
-            .setSecurityPolicies(
-                EnumSet.of(
-                    SecurityPolicy.None,
-                    SecurityPolicy.Basic128Rsa15,
-                    SecurityPolicy.Basic256,
-                    SecurityPolicy.Basic256Sha256,
-                    SecurityPolicy.Aes128_Sha256_RsaOaep,
-                    SecurityPolicy.Aes256_Sha256_RsaPss))
-            .setUserTokenPolicies(
-                ImmutableList.of(
-                    USER_TOKEN_POLICY_ANONYMOUS,
-                    USER_TOKEN_POLICY_USERNAME,
-                    USER_TOKEN_POLICY_X509))
-            .build();
+                .setApplicationUri(applicationUri)
+                .setApplicationName(LocalizedText.english("Eclipse Milo OPC UA Example Server"))
+                .setBindPort(12686)
+                .setBindAddresses(bindAddresses)
+                .setEndpointAddresses(endpointAddresses)
+                .setBuildInfo(
+                        new BuildInfo(
+                                "urn:eclipse:milo:example-server",
+                                "eclipse",
+                                "eclipse milo example server",
+                                OpcUaServer.SDK_VERSION,
+                                "", DateTime.now()))
+                .setCertificateManager(certificateManager)
+                .setCertificateValidator(certificateValidator)
+                .setIdentityValidator(new CompositeValidator(identityValidator, x509IdentityValidator))
+                .setProductUri("urn:eclipse:milo:example-server")
+                .setServerName("example")
+                .setSecurityPolicies(
+                        EnumSet.of(
+                                SecurityPolicy.None,
+                                SecurityPolicy.Basic128Rsa15,
+                                SecurityPolicy.Basic256,
+                                SecurityPolicy.Basic256Sha256,
+                                SecurityPolicy.Aes128_Sha256_RsaOaep,
+                                SecurityPolicy.Aes256_Sha256_RsaPss))
+                .setUserTokenPolicies(
+                        ImmutableList.of(
+                                USER_TOKEN_POLICY_ANONYMOUS,
+                                USER_TOKEN_POLICY_USERNAME,
+                                USER_TOKEN_POLICY_X509))
+                .build();
 
         server = new OpcUaServer(serverConfig);
 
         server.getNamespaceManager().registerAndAdd(
-            ExampleNamespace.NAMESPACE_URI,
-            idx -> new ExampleNamespace(server, idx));
+                ExampleNamespace.NAMESPACE_URI,
+                idx -> new ExampleNamespace(server, idx));
+
+        logger.info("Config done");
     }
 
     private CompletableFuture<OpcUaServer> startup() {
