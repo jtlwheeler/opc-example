@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 
@@ -43,9 +44,11 @@ public class ReadWriteCustomDataTypeNodeExample implements ClientExample {
         // synchronous connect
         client.connect().get();
 
+        getDynamicValues(client);
+
         // synchronous read request via VariableNode
         VariableNode node = client.getAddressSpace().createVariableNode(
-            new NodeId(2, "HelloWorld/CustomDataTypeVariable"));
+                new NodeId(2, "HelloWorld/CustomDataTypeVariable"));
 
         logger.info("DataType={}", node.getDataType().get());
 
@@ -61,13 +64,13 @@ public class ReadWriteCustomDataTypeNodeExample implements ClientExample {
 
         // Write a modified value
         CustomDataType modified = new CustomDataType(
-            decoded.getFoo() + "bar",
-            uint(decoded.getBar().intValue() + 1),
-            !decoded.isBaz()
+                decoded.getFoo() + "bar",
+                uint(decoded.getBar().intValue() + 1),
+                !decoded.isBaz()
         );
         ExtensionObject modifiedXo = ExtensionObject.encode(
-            modified,
-            xo.getEncodingTypeId()
+                modified,
+                xo.getEncodingTypeId()
         );
 
         StatusCode writeStatus = node.writeValue(new DataValue(new Variant(modifiedXo))).get();
@@ -90,19 +93,42 @@ public class ReadWriteCustomDataTypeNodeExample implements ClientExample {
     private void registerCustomCodec() {
         // Create a dictionary, binaryEncodingId, and register the codec under that id
         OpcUaBinaryDataTypeDictionary dictionary = new OpcUaBinaryDataTypeDictionary(
-            "urn:eclipse:milo:example:custom-data-type"
+                "urn:eclipse:milo:example:custom-data-type"
         );
 
         NodeId binaryEncodingId = new NodeId(2, "DataType.CustomDataType.BinaryEncoding");
 
         dictionary.registerStructCodec(
-            new CustomDataType.Codec().asBinaryCodec(),
-            "CustomDataType",
-            binaryEncodingId
+                new CustomDataType.Codec().asBinaryCodec(),
+                "CustomDataType",
+                binaryEncodingId
         );
 
         // Register dictionary with the shared DataTypeManager instance
         OpcUaDataTypeManager.getInstance().registerTypeDictionary(dictionary);
     }
 
+    private void getDynamicValues(OpcUaClient client) throws ExecutionException, InterruptedException {
+        logger.info("*************************************************");
+        VariableNode booleanNode = client.getAddressSpace().createVariableNode(
+                new NodeId(2, "HelloWorld/Dynamic/Boolean"));
+
+        logger.info("Boolean {}", booleanNode.readValue().get());
+
+        VariableNode doubleNode = client.getAddressSpace().createVariableNode(
+                new NodeId(2, "HelloWorld/Dynamic/Double"));
+
+        logger.info("Double {}", doubleNode.readValue().get());
+
+        VariableNode int32Node = client.getAddressSpace().createVariableNode(
+                new NodeId(2, "HelloWorld/Dynamic/Int32"));
+
+        logger.info("Int32 {}", int32Node.readValue().get());
+
+        VariableNode jtNode = client.getAddressSpace().createVariableNode(
+                new NodeId(2, "HelloWorld/Dynamic/JT"));
+
+        logger.info("JT {}", jtNode.readValue().get());
+        logger.info("*************************************************");
+    }
 }
